@@ -6,15 +6,37 @@ import {
   FieldError,
   Label,
 } from '@redwoodjs/forms'
+import { Flash, useFlash, useMutation } from '@redwoodjs/web'
 import BlogLayout from 'src/layouts/BlogLayout'
 
+const CREATE_CONTACT = gql`
+  mutation CreateContactMutation($input: CreateContactInput!) {
+    createContact(input: $input) {
+      id
+    }
+  }
+`
+
 const ContactPage = () => {
+  const { addMessage } = useFlash()
+
+  const [create, { loading, error }] = useMutation(CREATE_CONTACT, {
+    onCompleted: () => {
+      addMessage('Thank you for your submission!', {
+        style: { backgroundColor: 'green', color: 'white', padding: '1rem' },
+      })
+    },
+  })
+
   const onSubmit = (data) => {
+    create({ variables: { input: data } })
     console.log(data)
   }
 
   return (
     <BlogLayout>
+      <Flash timeout={1000} />
+
       <Form onSubmit={onSubmit} validation={{ mode: 'onBlur' }}>
         <Label name="name" errorClassName="error">
           Name
@@ -53,7 +75,7 @@ const ContactPage = () => {
         />
         <FieldError name="message" className="error" />
 
-        <Submit>Save</Submit>
+        <Submit disabled={loading}>Save</Submit>
       </Form>
     </BlogLayout>
   )
